@@ -1,6 +1,7 @@
 import torch.nn as nn
 import torch.nn.functional as F
 
+
 class Decoder(nn.Module):
     def __init__(self, opt, disc=False):
         super(Decoder, self).__init__()
@@ -11,7 +12,7 @@ class Decoder(nn.Module):
         self.t_act = opt.tanh
         self.scale_size = opt.scale_size
 
-        self.l0 = nn.Linear(self.h, 8*8*self.num_channel)
+        self.l0 = nn.Linear(self.h, 8 * 8 * self.num_channel)
         self.l1 = nn.Conv2d(self.num_channel, self.num_channel, 3, 1, 1)
         self.l2 = nn.Conv2d(self.num_channel, self.num_channel, 3, 1, 1)
         self.up1 = nn.UpsamplingNearest2d(scale_factor=2)
@@ -28,13 +29,11 @@ class Decoder(nn.Module):
             self.l10 = nn.Conv2d(self.num_channel, self.num_channel, 3, 1, 1)
             self.l11 = nn.Conv2d(self.num_channel, self.num_channel, 3, 1, 1)
         self.l9 = nn.Conv2d(self.num_channel, 3, 3, 1, 1)
-            
 
-        
     def forward(self, input):
         x = self.l0(input)
-        x = x.view(self.b_size, self.num_channel,8, 8)
-        
+        x = x.view(self.b_size, self.num_channel, 8, 8)
+
         x = F.elu(self.l1(x), True)
         x = F.elu(self.l2(x), True)
         x = self.up1(x)
@@ -52,11 +51,12 @@ class Decoder(nn.Module):
             x = F.elu(self.l10(x))
             x = F.elu(self.l11(x))
         x = self.l9(x)
-        #if not self.disc:
-        #if self.scale_size != 128:# and self.t_act:
+        # if not self.disc:
+        # if self.scale_size != 128:# and self.t_act:
         x = F.tanh(x)
         return x
-    
+
+
 class Encoder(nn.Module):
     def __init__(self, opt):
         super(Encoder, self).__init__()
@@ -72,37 +72,35 @@ class Encoder(nn.Module):
 
         self.l3 = nn.Conv2d(self.num_channel, self.num_channel, 3, 1, 1)
         self.l4 = nn.Conv2d(self.num_channel, self.num_channel, 3, 1, 1)
-        self.down2 = nn.Conv2d(self.num_channel, 2*self.num_channel, 1, 1, 0)
+        self.down2 = nn.Conv2d(self.num_channel, 2 * self.num_channel, 1, 1, 0)
         self.pool2 = nn.AvgPool2d(2, 2)
 
-        self.l5 = nn.Conv2d(2*self.num_channel, 2*self.num_channel, 3, 1, 1)
-        self.l6 = nn.Conv2d(2*self.num_channel, 2*self.num_channel, 3, 1, 1)
-        self.down3 = nn.Conv2d(2*self.num_channel, 3*self.num_channel, 1, 1, 0)
+        self.l5 = nn.Conv2d(2 * self.num_channel, 2 * self.num_channel, 3, 1, 1)
+        self.l6 = nn.Conv2d(2 * self.num_channel, 2 * self.num_channel, 3, 1, 1)
+        self.down3 = nn.Conv2d(2 * self.num_channel, 3 * self.num_channel, 1, 1, 0)
         self.pool3 = nn.AvgPool2d(2, 2)
-        
-        
+
         if self.scale_size == 64:
-            self.l7 = nn.Conv2d(3*self.num_channel, 3*self.num_channel, 3, 1, 1)
-            self.l8 = nn.Conv2d(3*self.num_channel, 3*self.num_channel, 3, 1, 1)
-            self.l9 = nn.Linear(8*8*3*self.num_channel, 64)
+            self.l7 = nn.Conv2d(3 * self.num_channel, 3 * self.num_channel, 3, 1, 1)
+            self.l8 = nn.Conv2d(3 * self.num_channel, 3 * self.num_channel, 3, 1, 1)
+            self.l9 = nn.Linear(8 * 8 * 3 * self.num_channel, 64)
         elif self.scale_size == 128:
-            self.l7 = nn.Conv2d(3*self.num_channel, 3*self.num_channel, 3, 1, 1)
-            self.l8 = nn.Conv2d(3*self.num_channel, 3*self.num_channel, 3, 1, 1)
-            self.down4 = nn.Conv2d(3*self.num_channel, 4*self.num_channel, 1, 1, 0)
+            self.l7 = nn.Conv2d(3 * self.num_channel, 3 * self.num_channel, 3, 1, 1)
+            self.l8 = nn.Conv2d(3 * self.num_channel, 3 * self.num_channel, 3, 1, 1)
+            self.down4 = nn.Conv2d(3 * self.num_channel, 4 * self.num_channel, 1, 1, 0)
             self.pool4 = nn.AvgPool2d(2, 2)
 
-            self.l9 = nn.Conv2d(4*self.num_channel, 4*self.num_channel, 3, 1, 1)
-            self.l11 = nn.Conv2d(4*self.num_channel, 4*self.num_channel, 3, 1, 1)
-            self.l12 = nn.Linear(8*8*4*self.num_channel, self.h)
+            self.l9 = nn.Conv2d(4 * self.num_channel, 4 * self.num_channel, 3, 1, 1)
+            self.l11 = nn.Conv2d(4 * self.num_channel, 4 * self.num_channel, 3, 1, 1)
+            self.l12 = nn.Linear(8 * 8 * 4 * self.num_channel, self.h)
 
-        
     def forward(self, input):
         x = F.elu(self.l0(input), True)
         x = F.elu(self.l1(x), True)
         x = F.elu(self.l2(x), True)
         x = self.down1(x)
         x = self.pool1(x)
-        
+
         x = F.elu(self.l3(x), True)
         x = F.elu(self.l4(x), True)
         x = self.pool2(self.down2(x))
@@ -114,7 +112,7 @@ class Encoder(nn.Module):
         if self.scale_size == 64:
             x = F.elu(self.l7(x), True)
             x = F.elu(self.l8(x), True)
-            x = x.view(self.b_size, 8*8*3*self.num_channel)
+            x = x.view(self.b_size, 8 * 8 * 3 * self.num_channel)
             x = self.l9(x)
         else:
             x = F.elu(self.l7(x), True)
@@ -123,16 +121,18 @@ class Encoder(nn.Module):
             x = self.pool4(x)
             x = F.elu(self.l9(x), True)
             x = F.elu(self.l11(x), True)
-            x = x.view(self.b_size, 8*8*4*self.num_channel)
+            x = x.view(self.b_size, 8 * 8 * 4 * self.num_channel)
             x = F.elu(self.l12(x), True)
 
         return x
-    
+
+
 class Discriminator(nn.Module):
     def __init__(self, nc):
         super(Discriminator, self).__init__()
         self.enc = Encoder(nc)
         self.dec = Decoder(nc, True)
+
     def forward(self, input):
         return self.dec(self.enc(input))
 
@@ -144,6 +144,7 @@ def weights_init(self, m):
     elif classname.find('BatchNorm') != -1:
         m.weight.data.normal_(1.0, 0.02)
         m.bias.data.fill_(0)
+
 
 class _Loss(nn.Module):
 
@@ -158,6 +159,7 @@ class _Loss(nn.Module):
         backend_fn = getattr(self._backend, type(self).__name__)
         return backend_fn(self.size_average)(input, target)
 
+
 class L1Loss(_Loss):
     r"""Creates a criterion that measures the mean absolute value of the
     element-wise difference between input `x` and target `y`:
@@ -171,5 +173,3 @@ class L1Loss(_Loss):
     The division by `n` can be avoided if one sets the constructor argument `sizeAverage=False`
     """
     pass
-
-
