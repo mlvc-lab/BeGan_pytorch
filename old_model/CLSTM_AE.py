@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 from torch.autograd import Variable
-from ConvLSTM_model import CLSTM, weights_init
+from old_model.ConvLSTM_model import CLSTM, weights_init
 
 
 class Encoder(nn.Module):
