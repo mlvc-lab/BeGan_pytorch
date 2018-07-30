@@ -53,7 +53,6 @@ class TdEncoder(nn.Module):
         self.l9 = nn.Linear((self.seq_size * 3) * self.input_channel * 8 * 8, self.hidden_size)
 
     def forward(self, inputs):
-        print('in', inputs.size())
         
         x = self.activation(self.l1(inputs))
         x = self.activation(self.l2(x))
@@ -126,13 +125,10 @@ class TdDecoder(nn.Module):
 
     def forward(self, inputs):
         
-        print(inputs.size())
-        
         x = self.activation(self.l1(inputs))
         x = x.view(-1, self.seq_size, self.input_channel, 8, 8)
         x = self.activation(self.l2(x))
         x = self.activation(self.l3(x))
-        print(x.size())
 
         x = self.activation(self.up1(x))
         x = self.activation(self.l4(x))
@@ -148,5 +144,42 @@ class TdDecoder(nn.Module):
         x = self.activation(self.l10(x))
 
         return x
-    
+
+
+# 3D AutoEncoder
+class TdAE(nn.Module):
+    def __init__(self, in_seq_size, out_seq_size, channel_size, hidden_size):
+        super(TdAE, self).__init__()
+
+        self.in_seq_size = in_seq_size
+        self.out_seq_size = out_seq_size
+        self.channel_size = channel_size
+        self.hidden_size = hidden_size
+
+        self.encoder = TdEncoder(in_seq_size, channel_size, hidden_size)
+        self.decoder = TdDecoder(out_seq_size, channel_size, hidden_size)
+
+    def forward(self, inputs):
+        x = self.encoder(inputs)
+        x = self.decoder(x)
+
+        return x
+
+
+def weights_init(self, m):
+    classname = m.__class__.__name__
+    if classname.find('Conv') != -1:
+        m.weight.data.normal_(0.0, 0.02)
+    elif classname.find('BatchNorm') != -1:
+        m.weight.data.normal_(1.0, 0.02)
+        m.bias.data.fill_(0)
+
+
 # TODO Loss
+class AELoss(nn.Module):
+    def __init__(self):
+        super(AELoss, self).__init__()
+        self.loss = nn.L1Loss()
+
+    def forward(self, input, target):
+        return self.loss(input, target)
