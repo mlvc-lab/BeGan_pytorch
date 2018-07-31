@@ -1,20 +1,15 @@
 
 # coding: utf-8
 
-import torch
-import torch.nn as nn
-import torch.nn.functional as F
 from torch.autograd import Variable
-import numpy as np
 from collections import deque
 
 import torchvision.utils as vutils
 
-import os
 import os.path
 
-from dataloader import *
-from models import *
+from began_model.dataloader import *
+from began_model.models import *
 import argparse
 
 import random

@@ -1,21 +1,13 @@
-import torch
-from torchvision import transforms
-import torch.utils.data as data
-from PIL import Image
 import os
-import os.path
+from PIL import Image
 import numpy as np
-from os import listdir
-from os.path import join
-import random
-import math
+import torch
+import torch.utils.data as data
 
-
-def is_image_file(filename):
-    return any(filename.endswith(extension) for extension in [".png", ".jpg", ".jpeg"])
 
 def default_loader(path):
-    return Image.open(path).convert('RGB')
+    return Image.open(path).convert('L')
+
 
 def ToTensor(pic):
     """Converts a PIL.Image or numpy.ndarray (H x W x C) in the range
@@ -50,56 +42,54 @@ def ToTensor(pic):
         return img
 
 
-# You should build custom dataset as below.
-class CelebA(data.Dataset):
-    def __init__(self,dataPath='data/CelebA/images/',loadSize=64,fineSize=64,flip=1):
-        super(CelebA, self).__init__()
-        # list all images into a list
-        self.image_list = [x for x in listdir(dataPath) if is_image_file(x)]
+# TODO if size of dataset is not divided by seq_size reminder is discarded
+class Solar(data.Dataset):
+    def __init__(self, dataPath='dataset/solar/', loadSize=64, seqSize=3):
+        super(Solar, self).__init__()
+
+        self.input_header = 'AIA0304/'
+        self.target_header = 'HMI0100/'
         self.dataPath = dataPath
         self.loadSize = loadSize
-        self.fineSize = fineSize
-        self.flip = flip
+        self.seqSize = seqSize
+        self.input_images = os.listdir(dataPath+self.input_header)
+        self.target_images = os.listdir(dataPath+self.target_header)
 
     def __getitem__(self, index):
-        # 1. Read one data from file (e.g. using numpy.fromfile, PIL.Image.open).
-        path = os.path.join(self.dataPath,self.image_list[index])
-        img = default_loader(path) 
-        w,h = img.size
+        inputs, targets = [], []
 
-        if(h != self.loadSize):
-            img = img.resize((self.loadSize, self.loadSize), Image.BILINEAR)
+        for idx in range(index, index+self.seqSize):
+            input_path = os.path.join(self.dataPath, self.input_header, self.input_images[idx])
+            target_path = os.path.join(self.dataPath, self.target_header, self.target_images[idx])
 
-        if(self.loadSize != self.fineSize):
-            #x1 = random.randint(0, self.loadSize - self.fineSize)
-            #y1 = random.randint(0, self.loadSize - self.fineSize)
-             
-            x1 = math.floor((self.loadSize - self.fineSize)/2)
-            y1 = math.floor((self.loadSize - self.fineSize)/2)
-            img = img.crop((x1, y1, x1 + self.fineSize, y1 + self.fineSize))
+            input_image = default_loader(input_path)
+            target_image = default_loader(target_path)
+            w, h = input_image.size
 
-        if(self.flip == 1):
-            if random.random() < 0.5:
-                img = img.transpose(Image.FLIP_LEFT_RIGHT)
+            # image resizing
+            if h != self.loadSize:
+                input_image = input_image.resize((self.loadSize, self.loadSize), Image.BICUBIC)
+                target_image = target_image.resize((self.loadSize, self.loadSize), Image.BICUBIC)
 
-        img = ToTensor(img) # 3 x 256 x 256
+            input_image = ToTensor(input_image)  # C x W x H
+            target_image = ToTensor(target_image)
 
-        img = img.mul_(2).add_(-1)
-        # 3. Return a data pair (e.g. image and label).
-        return img
+            input_image = input_image.mul_(2).add_(-1)
+            target_image = target_image.mul_(2).add_(-1)
+
+            inputs.append(input_image)
+            targets.append(target_image)
+
+        return np.stack(inputs), np.stack(targets)
 
     def __len__(self):
         # You should change 0 to the total size of your dataset.
-        return len(self.image_list)
+        return len(self.input_images) - self.seqSize + 1
 
 
-
-def get_loader(root, batch_size, scale_size, num_workers=12, shuffle=True):
-    dataset = CelebA(root,scale_size,scale_size,1)
+def get_loader(root, batch_size, scale_size=64, seq_size=3, num_workers=12):
+    dataset = Solar(root, scale_size, seq_size)
     data_loader = torch.utils.data.DataLoader(dataset=dataset,
-                                           batch_size=batch_size,
-                                           shuffle=True,
-                                           num_workers=num_workers)
+                                              batch_size=batch_size,
+                                              num_workers=num_workers)
     return data_loader
-
-
