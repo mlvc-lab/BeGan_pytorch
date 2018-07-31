@@ -7,6 +7,9 @@ from td_models import TdEncoder, TdDecoder, TdAE
 
 class Td_Model_Test(unittest.TestCase):
 
+    def setUp(self):
+        pass
+
     def test_encoder(self):
         batch_size = 1
         input_size = (64, 64)
@@ -51,4 +54,4 @@ class Td_Model_Test(unittest.TestCase):
 
 
 if __name__ == '__main__':
-    Td_Model_Test()
+    unittest.main()
