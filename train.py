@@ -21,10 +21,11 @@ def save_models(model, basepath, step):
 
 def five_dim_to_img_seq(vector, opt, step):
     size = tuple(vector.size())
+    vector = vector.permute(0, 2, 1, 3, 4)
     for b in range(size[0]):
-        for s in range(size[1]):
-            img_vec = vector[b, s, :, :, :]
-            vutils.save_image(img_vec.data, '%s/%s_%s_%s-%s.png'%(opt.savepath, opt.model_name, str(step), str(b), str(s)), normalize=True)
+        for c in range(size[1]):
+            img_vec = vector[b, c, :, :, :]
+            vutils.save_image(img_vec.data, '%s/%s_%s_%s-%s.png'%(opt.savepath, opt.model_name, str(step), str(b), str(c)), normalize=True)
 
 
 def train(model, device, train_loader, optimizer, epoch):
@@ -61,13 +62,13 @@ def main():
     parser.add_argument('--test_dataset', default='../test/solar/', type=str)
     parser.add_argument('--savepath', default='output/solar/', type=str)
     parser.add_argument('--model_name', default='AE', type=str)
-    parser.add_argument('--batch', default=16, type=int)
+    parser.add_argument('--batch', default=8, type=int)
     parser.add_argument('--epochs', default=30, type=int)
     parser.add_argument('--in_seq', default=3, type=int)
     parser.add_argument('--out_seq', default=3, type=int)
     parser.add_argument('--channel', default=1, type=int)
-    parser.add_argument('--hidden', default=100, type=int)
-    parser.add_argument('--image_scale', default=64, type=int)
+    parser.add_argument('--hidden', default=1024, type=int)
+    parser.add_argument('--image_scale', default=256, type=int)
     parser.add_argument('--lr', default=0.001, type=float)
     parser.add_argument('--manual_seed', default=826, type=int)
     parser.add_argument('--gpuid', default=0, type=int)
@@ -107,7 +108,7 @@ def main():
         if epoch % 10 == 0:
             save_models(model, opt.savepath, epoch)
             write_config(opt, epoch)
-
+            print('Model Saved')
             test(model, 'cuda', test_loader, opt, epoch)
 
 

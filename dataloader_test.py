@@ -27,8 +27,8 @@ class DataLoaderTest(unittest.TestCase):
         for idx, (inputs, targets) in enumerate(dl):
             # print(idx, (inputs.shape, targets.shape))
             # output shape check
-            self.assertEqual(tuple(inputs.shape), (batch_size, seq_size, 1, scale_size, scale_size)) 
-            self.assertEqual(tuple(targets.shape), (batch_size, seq_size, 1, scale_size, scale_size))
+            self.assertEqual(tuple(inputs.shape), (batch_size, 1, seq_size, scale_size, scale_size)) 
+            self.assertEqual(tuple(targets.shape), (batch_size,  1, seq_size, scale_size, scale_size))
             # implot = plt.imshow(inputs[0, 0, 0, :, :].numpy(), cmap='gray')
             # plt.show()
             # implot = plt.imshow(targets[0, 0, 0, :, :].numpy(), cmap='gray')

@@ -80,7 +80,7 @@ class Solar(data.Dataset):
             inputs.append(input_image)
             targets.append(target_image)
 
-        return np.stack(inputs), np.stack(targets)
+        return torch.stack(inputs).permute(1, 0, 2, 3), torch.stack(targets).permute(1, 0, 2, 3)
 
     def __len__(self):
         # You should change 0 to the total size of your dataset.
