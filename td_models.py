@@ -99,28 +99,34 @@ class TdDecoder(nn.Module):
                             stride=self.stride, padding=self.padding, groups=self.groups)
         self.l3 = nn.Conv3d(self.seq_size, self.seq_size, self.kernel_size,
                             stride=self.stride, padding=self.padding, groups=self.groups)
+        self.l4 = nn.Conv3d(self.seq_size, self.seq_size, self.kernel_size,
+                            stride=self.stride, padding=self.padding, groups=self.groups)
 
         # 16x16xchan
         self.up1 = nn.Upsample(scale_factor=2)
-        self.l4 = nn.Conv3d(self.seq_size, self.seq_size, self.kernel_size,
-                            stride=self.stride, padding=self.padding, groups=self.groups)
         self.l5 = nn.Conv3d(self.seq_size, self.seq_size, self.kernel_size,
-                            stride=(2, 1, 1), padding=self.padding, groups=self.groups)
-
-        # 32x32xchan
-        self.up2 = nn.Upsample(scale_factor=2)
+                            stride=self.stride, padding=self.padding, groups=self.groups)
         self.l6 = nn.Conv3d(self.seq_size, self.seq_size, self.kernel_size,
                             stride=self.stride, padding=self.padding, groups=self.groups)
         self.l7 = nn.Conv3d(self.seq_size, self.seq_size, self.kernel_size,
                             stride=(2, 1, 1), padding=self.padding, groups=self.groups)
 
-        # 64x64xchan
-        self.up3 = nn.Upsample(scale_factor=2)
+        # 32x32xchan
+        self.up2 = nn.Upsample(scale_factor=2)
         self.l8 = nn.Conv3d(self.seq_size, self.seq_size, self.kernel_size,
                             stride=self.stride, padding=self.padding, groups=self.groups)
         self.l9 = nn.Conv3d(self.seq_size, self.seq_size, self.kernel_size,
                             stride=self.stride, padding=self.padding, groups=self.groups)
         self.l10 = nn.Conv3d(self.seq_size, self.seq_size, self.kernel_size,
+                            stride=(2, 1, 1), padding=self.padding, groups=self.groups)
+
+        # 64x64xchan
+        self.up3 = nn.Upsample(scale_factor=2)
+        self.l11 = nn.Conv3d(self.seq_size, self.seq_size, self.kernel_size,
+                            stride=self.stride, padding=self.padding, groups=self.groups)
+        self.l12 = nn.Conv3d(self.seq_size, self.seq_size, self.kernel_size,
+                            stride=self.stride, padding=self.padding, groups=self.groups)
+        self.l13 = nn.Conv3d(self.seq_size, self.seq_size, self.kernel_size,
                              stride=(2, 1, 1), padding=self.padding, groups=self.groups)
 
     def forward(self, inputs):
@@ -129,19 +135,22 @@ class TdDecoder(nn.Module):
         x = x.view(-1, self.seq_size, self.input_channel, 8, 8)
         x = self.activation(self.l2(x))
         x = self.activation(self.l3(x))
+        x = self.activation(self.l4(x))
 
         x = self.activation(self.up1(x))
-        x = self.activation(self.l4(x))
         x = self.activation(self.l5(x))
-
-        x = self.activation(self.up2(x))
         x = self.activation(self.l6(x))
         x = self.activation(self.l7(x))
 
-        x = self.activation(self.up3(x))
+        x = self.activation(self.up2(x))
         x = self.activation(self.l8(x))
         x = self.activation(self.l9(x))
         x = self.activation(self.l10(x))
+
+        x = self.activation(self.up3(x))
+        x = self.activation(self.l11(x))
+        x = self.activation(self.l12(x))
+        x = self.activation(self.l13(x))
 
         return x
 
