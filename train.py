@@ -6,7 +6,7 @@ import json
 import torch
 import torchvision.utils as vutils
 
-from td_ae_models import TdAE, AELoss
+from td_unet_model import UNet, ULoss
 from dataloader import get_loader
 
 
@@ -30,7 +30,7 @@ def five_dim_to_img_seq(vector, opt, step):
 
 def train(model, device, train_loader, optimizer, epoch):
     model.train()
-    creterion = AELoss()
+    creterion = ULoss()
     for batch_idx, (data, target) in enumerate(train_loader):
         data, target = data.to(device), target.to(device)
         optimizer.zero_grad()
@@ -41,6 +41,10 @@ def train(model, device, train_loader, optimizer, epoch):
         if batch_idx % 10 == 0:
             print('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(
                 epoch, batch_idx * len(data), len(train_loader.dataset), 100. * batch_idx / len(train_loader), loss.item()))
+
+        # TODO remove this !!!
+        if batch_idx * 8 >= 1000:
+            break
 
 
 def test(model, device, test_loader, opt, step):
@@ -67,12 +71,11 @@ def main():
     parser.add_argument('--in_seq', default=3, type=int)
     parser.add_argument('--out_seq', default=3, type=int)
     parser.add_argument('--channel', default=1, type=int)
-    parser.add_argument('--hidden', default=1024, type=int)
     parser.add_argument('--image_scale', default=256, type=int)
     parser.add_argument('--lr', default=0.001, type=float)
     parser.add_argument('--manual_seed', default=826, type=int)
-    parser.add_argument('--test_interval', default=5, type=int)
-    parser.add_argument('--gpuid', default=0, type=int)
+    parser.add_argument('--test_interval', default=1, type=int)
+    parser.add_argument('--gpuid', default=1, type=int)
     parser.add_argument('--cuda', action='store_true')
     opt = parser.parse_args()
 
@@ -86,8 +89,10 @@ def main():
         opt.cuda = True
         torch.cuda.set_device(opt.gpuid)
         torch.cuda.manual_seed_all(opt.manual_seed)
-        model = TdAE(opt.in_seq, opt.out_seq, opt.channel, opt.hidden)
+        model = UNet(opt.channel, opt.channel)
         model = torch.nn.DataParallel(model, device_ids=[opt.gpuid])
+
+    print(model)
 
     # save path
     parampath = os.path.join(opt.savepath, 'experiments/%s/params/' % opt.model_name)
