@@ -6,7 +6,7 @@ import json
 import torch
 import torchvision.utils as vutils
 
-from td_models import TdAE, AELoss
+from td_ae_models import TdAE, AELoss
 from dataloader import get_loader
 
 
@@ -38,7 +38,7 @@ def train(model, device, train_loader, optimizer, epoch):
         loss = creterion(output, target)
         loss.backward()
         optimizer.step()
-        if batch_idx % 50 == 0:
+        if batch_idx % 10 == 0:
             print('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(
                 epoch, batch_idx * len(data), len(train_loader.dataset), 100. * batch_idx / len(train_loader), loss.item()))
 
@@ -71,6 +71,7 @@ def main():
     parser.add_argument('--image_scale', default=256, type=int)
     parser.add_argument('--lr', default=0.001, type=float)
     parser.add_argument('--manual_seed', default=826, type=int)
+    parser.add_argument('--test_interval', default=5, type=int)
     parser.add_argument('--gpuid', default=0, type=int)
     parser.add_argument('--cuda', action='store_true')
     opt = parser.parse_args()
@@ -94,18 +95,17 @@ def main():
         if not os.path.exists(path):
             os.makedirs(path)
 
-    kwargs = {'num_workers': 1, 'pin_memory': True} if opt.cuda else {}
     train_loader = get_loader(opt.dataset, batch_size=opt.batch, seq_size=opt.in_seq, scale_size=opt.image_scale)
     test_loader = get_loader(opt.test_dataset, batch_size=opt.batch, seq_size=opt.in_seq, scale_size=opt.image_scale)
 
     optimizer = torch.optim.Adam(model.parameters(), lr=opt.lr)
-    
+
     for epoch in range(1, opt.epochs + 1):
         # train
         train(model, 'cuda', train_loader, optimizer, epoch)
 
         # save
-        if epoch % 10 == 0:
+        if epoch % opt.test_interval == 0:
             save_models(model, opt.savepath, epoch)
             write_config(opt, epoch)
             print('Model Saved')

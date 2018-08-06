@@ -87,9 +87,10 @@ class Solar(data.Dataset):
         return len(self.input_images) - self.seqSize + 1
 
 
-def get_loader(root, batch_size, scale_size=64, seq_size=3, num_workers=12):
+def get_loader(root, batch_size, scale_size=64, seq_size=3, num_workers=24, shuffle=True):
     dataset = Solar(root, scale_size, seq_size)
     data_loader = torch.utils.data.DataLoader(dataset=dataset,
                                               batch_size=batch_size,
-                                              num_workers=num_workers)
+                                              num_workers=num_workers,
+                                              shuffle=shuffle)
     return data_loader

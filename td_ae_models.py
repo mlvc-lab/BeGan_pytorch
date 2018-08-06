@@ -47,8 +47,8 @@ class TdEncoder(nn.Module):
                             stride=self.stride, padding=self.padding, groups=self.groups)
         self.l8 = nn.Conv3d(512, 512, self.kernel_size,
                             stride=self.stride, padding=self.padding, groups=self.groups)
-        self.pool5 = nn.MaxPool3d((1, 2, 2), (1, 2, 2))
-        self.l9 = nn.Linear(self.depth * 512 * 8 * 8, self.hidden_size)
+        # self.pool5 = nn.MaxPool3d((1, 2, 2), (1, 2, 2))
+        # self.l9 = nn.Linear(self.depth * 512 * 8 * 8, self.hidden_size)
 
     def forward(self, inputs):
         x = self.activation(self.l1(inputs))
@@ -67,9 +67,9 @@ class TdEncoder(nn.Module):
 
         x = self.activation(self.l7(x))
         x = self.activation(self.l8(x))
-        x = self.activation(self.pool5(x))
-        x = x.view(-1, self.depth * 512 * 8 * 8)
-        x = self.activation(self.l9(x))
+        # x = self.activation(self.pool5(x))
+        # x = x.view(-1, self.depth * 512 * 8 * 8)
+        # x = self.activation(self.l9(x))
 
         return x
 
@@ -77,7 +77,7 @@ class TdEncoder(nn.Module):
 # 3D Decoder
 class TdDecoder(nn.Module):
     def __init__(self, depth, input_channel, hidden_size,
-                 kernel_size=(3, 3, 3), stride=(1, 1, 1), padding=(1, 1, 1), groups=1, activation=F.elu):
+                 kernel_size=(3, 3, 3), stride=(1, 1, 1), padding=(1, 1, 1), groups=1, norm_layer=nn.BatchNorm3d, activation=F.elu):
         super(TdDecoder, self).__init__()
 
         self.depth = depth
@@ -87,60 +87,68 @@ class TdDecoder(nn.Module):
         self.stride = stride
         self.padding = padding
         self.groups = groups
+        self.norm_layer = norm_layer
         self.activation = activation
 
         # TODO change kernel size to figure out long-term and short-term effect
         # 1
-        self.l1 = nn.Linear(self.hidden_size, (512 * self.depth * 8 * 8))
-        self.up0 = nn.Upsample(scale_factor=(1, 2, 2), mode='trilinear')
+        # self.l1 = nn.Linear(self.hidden_size, (512 * self.depth * 8 * 8))
+        # self.up0 = nn.Upsample(scale_factor=(1, 2, 2), mode='trilinear')
         self.l2 = nn.Conv3d(512, 512, self.kernel_size,
                             stride=self.stride, padding=self.padding, groups=self.groups)
+        self.n1 = self.norm_layer(512)
 
         # 2
         self.up1 = nn.Upsample(scale_factor=(1, 2, 2), mode='trilinear')
         self.l3 = nn.Conv3d(512, 256, self.kernel_size,
                             stride=self.stride, padding=self.padding, groups=self.groups)
+        self.n2 = self.norm_layer(256)
 
         # 3
         self.up2 = nn.Upsample(scale_factor=(1, 2, 2), mode='trilinear')
         self.l4 = nn.Conv3d(256, 128, self.kernel_size,
                             stride=self.stride, padding=self.padding, groups=self.groups)
+        self.n3 = self.norm_layer(128)
         self.l5 = nn.Conv3d(128, 128, self.kernel_size,
                             stride=self.stride, padding=self.padding, groups=self.groups)
+        self.n4 = self.norm_layer(128)
 
         # 4
         self.up3 = nn.Upsample(scale_factor=(1, 2, 2), mode='trilinear')
         self.l6 = nn.Conv3d(128, 64, self.kernel_size,
                             stride=self.stride, padding=self.padding, groups=self.groups)
+        self.n5 = self.norm_layer(64)
         self.l7 = nn.Conv3d(64, 64, self.kernel_size,
                             stride=self.stride, padding=self.padding, groups=self.groups)
+        self.n6 = self.norm_layer(64)
 
         # 5
         self.up4 = nn.Upsample(scale_factor=(1, 2, 2), mode='trilinear')
         self.l8 = nn.Conv3d(64, 1, self.kernel_size,
                             stride=self.stride, padding=self.padding, groups=self.groups)
+        self.n7 = self.norm_layer(1)
         self.l9 = nn.Conv3d(1, 1, self.kernel_size,
                             stride=self.stride, padding=self.padding, groups=self.groups)
 
     def forward(self, inputs):
-        x = self.activation(self.l1(inputs))
-        x = x.view(-1, 512, self.depth, 8, 8)
-        x = self.activation(self.up0(x))
-        x = self.activation(self.l2(x))
+        # x = self.activation(self.l1(inputs))
+        # x = x.view(-1, 512, self.depth, 8, 8)
+        # x = self.activation(self.up0(x))
+        x = self.activation(self.n1(self.l2(inputs)))
 
         x = self.activation(self.up1(x))
-        x = self.activation(self.l3(x))
+        x = self.activation(self.n2(self.l3(x)))
 
         x = self.activation(self.up2(x))
-        x = self.activation(self.l4(x))
-        x = self.activation(self.l5(x))
+        x = self.activation(self.n3(self.l4(x)))
+        x = self.activation(self.n4(self.l5(x)))
 
         x = self.activation(self.up3(x))
-        x = self.activation(self.l6(x))
-        x = self.activation(self.l7(x))
+        x = self.activation(self.n5(self.l6(x)))
+        x = self.activation(self.n6(self.l7(x)))
 
         x = self.activation(self.up4(x))
-        x = self.activation(self.l8(x))
+        x = self.activation(self.n7(self.l8(x)))
         x = self.l9(x)
 
         return x

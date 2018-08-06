@@ -2,7 +2,7 @@ import torch
 from torch.autograd import Variable
 import unittest
 
-from td_models import TdEncoder, TdDecoder, TdAE
+from td_ae_models import TdEncoder, TdDecoder, TdAE
 
 
 class Td_Model_Test(unittest.TestCase):
